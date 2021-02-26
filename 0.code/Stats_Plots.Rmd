@@ -1,103 +1,87 @@
 ```{R Packages}
 library(ggplot2)
-library(Gviz)
-library(GenomicRanges)
-library(BSgenome.Hsapiens.UCSC.hg19)
 library(readxl)
 library(dplyr)
 library(ggpubr)
 library(gridExtra)
 library(ggsignif)
 library(gprofiler2)
+library(BSgenome.Hsapiens.UCSC.hg19)
 ```
 
 #gprofiler2 - Enrichment
 ```{r}
-#Archaic
-ensemblhg19_3UTR_w_arc <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_arc.csv")
-arc_bg <- as.vector(ensemblhg19_3UTR_w_arc$gene_name)
+#Reading tables
+##Archaic
+ensemblhg19_3UTR_w_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC.csv")
+names(ensemblhg19_3UTR_w_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
 
-result0_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
-result01_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.01, evcodes = TRUE, custom_bg = mh_bg)
-table01 <- apply(result0_enrich005[["result"]],2,as.character)
-table01 <- as.data.frame(table1)
+##Archaic without Homo sapiens
+ensemblhg19_3UTR_w_ArchaicSNC_withoutHS <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC_withoutHS.csv")
+names(ensemblhg19_3UTR_w_ArchaicSNC_withoutHS) <- c("chr", "3utr_start", "3utr_end", "gene_name")
 
-mh_bg <- as.vector(mh_names$gene_name)
-#ensemblhg19_3UTR_w_hHF
-ensemblhg19_3UTR_w_hHF <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF.csv")
-read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF_without_arc.csv")
-result1_enrich005 <- gost(ensemblhg19_3UTR_w_hHF$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
-result11_enrich005 <- gost(ensemblhg19_3UTR_w_hHF$gene_name, correction_method = "gSCS", user_threshold = 0.9, evcodes = TRUE, custom_bg = arc_bg)
-table1 <- apply(result1_enrich005[["result"]],2,as.character)
+##Homo sapiens
+ensemblhg19_3UTR_w_HsapiensSNC <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC.csv")
+names(ensemblhg19_3UTR_w_HsapiensSNC) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+
+##Homo sapiens without archaics
+ensemblhg19_3UTR_w_HsapiensSNC_without_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC_without_arc.csv")
+names(ensemblhg19_3UTR_w_HsapiensSNC_without_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+
+###Exclusive gene names
+hs_exclusive <- subset(ensemblhg19_3UTR_w_HsapiensSNC_without_arc, !(gene_name %in% ensemblhg19_3UTR_w_arc$gene_name))$gene_name
+                       
+arc_exclusive <- subset(ensemblhg19_3UTR_w_ArchaicSNC_withoutHS, !(gene_name %in% ensemblhg19_3UTR_w_HsapiensSNC$gene_name))$gene_name
+
+#First enrich analysis - Genes from UTR with species-specific changes
+##Archaic
+arc_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+table01 <- apply(arc_enrich005[["result"]],2,as.character)
+table01 <- as.data.frame(table01)
+write.csv(table01[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_ensemblhg19_3UTR_w_ArchaicSNC_genes.csv", row.names = FALSE)
+##Homo sapiens
+hs_enrich005 <- gost(ensemblhg19_3UTR_w_HsapiensSNC$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE) #length(unique(ensemblhg19_3UTR_w_hHF$gene_name)) == 890
+table1 <- apply(hs_enrich005[["result"]],2,as.character)
 table1 <- as.data.frame(table1)
+write.csv(table1[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_ensemblhg19_3UTR_w_HsapiensSNC_genes.csv", row.names = FALSE)
 
+exclusive_terms_hs <- subset(table1, !(term_name %in% table01$term_name))
+write.csv(exclusive_terms_hs[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_only_in_Hsapiens.csv", row.names = FALSE)
+exclusive_terms_archaic <- subset(table01, !(term_name %in% table1$term_name))
+write.csv(exclusive_terms_archaic[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_only_in_Archaics.csv", row.names = FALSE)
 
-#3UTR_w_hHF_without_arc
-ensemblhg19_3UTR_w_hHF_without_arc <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF_without_arc.csv")
-result2_enrich005 <- gost(ensemblhg19_3UTR_w_hHF_without_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
-result21_enrich005 <- gost(ensemblhg19_3UTR_w_hHF_without_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE, custom_bg = arc_bg)
-table2 <- apply(result2_enrich005[["result"]],2,as.character)
+common_terms <- subset(table1, term_name %in% table01$term_name)
+write.csv(common_terms[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_common_btwSpecies.csv", row.names = FALSE)
+
+#Second enrich analysis: Gene names exclusive for each lineage
+##Archaic
+arconly_enrich005 <- gost(arc_exclusive, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+table02 <- apply(arconly_enrich005[["result"]],2,as.character)
+table02 <- as.data.frame(table02)
+write.csv(table02[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_Archaic_exclusivegenes.csv", row.names = FALSE)
+##Homo sapiens
+hsonly_enrich005 <- gost(hs_exclusive, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE) #length(unique(ensemblhg19_3UTR_w_hHF_without_arc$gene_name)) == 573
+table2 <- apply(hsonly_enrich005[["result"]],2,as.character)
 table2 <- as.data.frame(table2)
+write.csv(table2[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_Hsapiens_exclusivegenes.csv", row.names = FALSE)
+
+#Plot - Exclusive terms in Homo sapiens
+exclusive_terms_hs$p_value <- as.character(exclusive_terms_hs$p_value)
+exclusive_terms_hs$p_value <- as.numeric(exclusive_terms_hs$p_value)
+
+exclusive_terms_hs$intersection_size <- as.character(exclusive_terms_hs$intersection_size)
+exclusive_terms_hs$intersection_size <- as.numeric(exclusive_terms_hs$intersection_size)
 
 
-#Only modern human names
-mh_names <- subset(ensemblhg19_3UTR_w_hHF, ensemblhg19_3UTR_w_hHF_without_arc$gene_name %in% ensemblhg19_3UTR_w_arc$gene_name)
-result3_enrich005 <- gost(mh_names$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
-result31_enrich005 <- gost(mh_names$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE, custom_bg = arc_bg)
-table3 <- apply(result3_enrich005[["result"]],2,as.character)
-table3 <- as.data.frame(table3)
-```
+exclusive_terms_hs$term_name <- str_replace(exclusive_terms_hs$term_name, "\\;.*","")
 
-#Ideograms - Figure
-```{r}
-##SNPS: RUNX2: rs188598788; GLI3: rs77197280; SOST: rs17886183; E2F6: rs148715349
-gtrack <- GenomeAxisTrack()
-fcol <- c(A="darkgray", C="darkgray", T="darkgray", G="darkgray")
+exclusive_terms_hs$term_name <- factor(exclusive_terms_hs$term_name, levels=as.vector(exclusive_terms_hs$term_name))
 
+figGO<- ggplot(exclusive_terms_hs, aes(`term_name`,`source`))+geom_point(aes(size = `intersection_size`, colour=`p_value` ))+labs(size="Number of genes",col="Adj p-value")+scale_color_gradient()+xlab("")+ ylab("")+theme(axis.text.x = element_text(angle = 45, size=9, hjust=1), axis.text.y = element_text(face="bold", size=12), axis.ticks = element_line(),axis.line = element_line(size = 1, linetype = "solid"))
 
-par(mfrow = c(2, 2))
-#E2F6
-chr2 <- as.character("chr2")
-strack2 <- SequenceTrack(Hsapiens, chromosome = chr2)
-itrack2 <- IdeogramTrack(genome = "hg19", chromosome = chr2)
-ht2 <- HighlightTrack(trackList = list(strack2),
-                     start = c(11585010 , 11585010),  width = 0,
-                     chromosome = 2)
-
-plotTracks(list(itrack2,ht2), from = 11584986, to = 11585034, cex = 0.8,  add53 = TRUE, main = "E2F6", fontface.main = 1, cex.main = 2)
-#GLI3
-chr7 <- as.character("chr7")
-strack7 <- SequenceTrack(Hsapiens, chromosome = chr7)
-itrack7 <- IdeogramTrack(genome = "hg19", chromosome = chr7)
-ht7 <- HighlightTrack(trackList = list(strack7),
-                     start = c(42003273 , 42003273),  width = 0,
-                     chromosome = 7)
-plotTracks(list(itrack7,ht7), from = 42003249, to = 42003297, cex = 0.8,  add53 = TRUE, main = "GLI3", fontface.main = 1, cex.main = 2)
-#RUNX2
-chr6 <- as.character("chr6")
-strack6 <- SequenceTrack(Hsapiens, chromosome = chr6)
-itrack6 <- IdeogramTrack(genome = "hg19", chromosome = chr6)
-ht6 <- HighlightTrack(trackList = list(strack6),
-                     start = c(45516175 , 45516175),  width = 0,
-                     chromosome = 6)
-plotTracks(list(itrack6,ht6), from = 45516151, to = 45516199, cex = 0.8,  add53 = TRUE, main = "RUNX2", fontface.main = 1, cex.main = 2)
-#SOST
-chr17 <- as.character("chr17")
-strack17 <- SequenceTrack(Hsapiens, chromosome = chr17)
-itrack17 <- IdeogramTrack(genome = "hg19", chromosome = chr17)
-ht17 <- HighlightTrack(trackList = list(strack17),
-                     start = c(41831706, 41831706),  width = 0,
-                     chromosome = 17)
-plotTracks(list(itrack17,ht17), from = 41831683, to = 41831729, cex = 0.8,  add53 = TRUE, main = "SOST", fontface.main = 1, cex.main = 2)
-
-#Same plot: https://bioconductor.org/packages/release/bioc/vignettes/Gviz/inst/doc/Gviz.html#7_Composite_plots_for_multiple_chromosomes
-strackL <- SequenceTrack(Hsapiens, chromosome = c("chr2", "chr6", "chr7", "chr17"))
-itrackL <- IdeogramTrack(genome = "hg19", chromosome = c("chr2", "chr6", "chr7", "chr17"))
-htL <- HighlightTrack(trackList = list(strackL),
-                     start = list((41831706, 41831706), (45516175, 45516175), (42003273, 42003273), (11585010 , 11585010)),  width = 0, chromosome = c("chr2", "chr6", "chr7", "chr17"))
-plotTracks(list(itrack17,ht17), from = 41831683, to = 41831729, cex = 0.8,  add53 = TRUE, main = "SOST", fontface.main = 1, cex.main = 2)
-
-
+ggsave(file="~/3utr_humanevolution/2.plots/G0enrich.pdf", figGO, width = 11.69, height = 8.27, units = "in")
 
 ```
 
