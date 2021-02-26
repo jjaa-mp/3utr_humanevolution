@@ -1,0 +1,143 @@
+```{R Packages}
+library(ggplot2)
+library(Gviz)
+library(GenomicRanges)
+library(BSgenome.Hsapiens.UCSC.hg19)
+library(readxl)
+library(dplyr)
+library(ggpubr)
+library(gridExtra)
+library(ggsignif)
+library(gprofiler2)
+```
+
+#gprofiler2 - Enrichment
+```{r}
+#Archaic
+ensemblhg19_3UTR_w_arc <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_arc.csv")
+arc_bg <- as.vector(ensemblhg19_3UTR_w_arc$gene_name)
+
+result0_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+result01_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.01, evcodes = TRUE, custom_bg = mh_bg)
+table01 <- apply(result0_enrich005[["result"]],2,as.character)
+table01 <- as.data.frame(table1)
+
+mh_bg <- as.vector(mh_names$gene_name)
+#ensemblhg19_3UTR_w_hHF
+ensemblhg19_3UTR_w_hHF <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF.csv")
+read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF_without_arc.csv")
+result1_enrich005 <- gost(ensemblhg19_3UTR_w_hHF$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+result11_enrich005 <- gost(ensemblhg19_3UTR_w_hHF$gene_name, correction_method = "gSCS", user_threshold = 0.9, evcodes = TRUE, custom_bg = arc_bg)
+table1 <- apply(result1_enrich005[["result"]],2,as.character)
+table1 <- as.data.frame(table1)
+
+
+#3UTR_w_hHF_without_arc
+ensemblhg19_3UTR_w_hHF_without_arc <- read.delim("~/Desktop/ub-genetics/1.data/1.2.Tables/ensemblhg19_3UTR_w_hHF_without_arc.csv")
+result2_enrich005 <- gost(ensemblhg19_3UTR_w_hHF_without_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+result21_enrich005 <- gost(ensemblhg19_3UTR_w_hHF_without_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE, custom_bg = arc_bg)
+table2 <- apply(result2_enrich005[["result"]],2,as.character)
+table2 <- as.data.frame(table2)
+
+
+#Only modern human names
+mh_names <- subset(ensemblhg19_3UTR_w_hHF, ensemblhg19_3UTR_w_hHF_without_arc$gene_name %in% ensemblhg19_3UTR_w_arc$gene_name)
+result3_enrich005 <- gost(mh_names$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+result31_enrich005 <- gost(mh_names$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE, custom_bg = arc_bg)
+table3 <- apply(result3_enrich005[["result"]],2,as.character)
+table3 <- as.data.frame(table3)
+```
+
+#Ideograms - Figure
+```{r}
+##SNPS: RUNX2: rs188598788; GLI3: rs77197280; SOST: rs17886183; E2F6: rs148715349
+gtrack <- GenomeAxisTrack()
+fcol <- c(A="darkgray", C="darkgray", T="darkgray", G="darkgray")
+
+
+par(mfrow = c(2, 2))
+#E2F6
+chr2 <- as.character("chr2")
+strack2 <- SequenceTrack(Hsapiens, chromosome = chr2)
+itrack2 <- IdeogramTrack(genome = "hg19", chromosome = chr2)
+ht2 <- HighlightTrack(trackList = list(strack2),
+                     start = c(11585010 , 11585010),  width = 0,
+                     chromosome = 2)
+
+plotTracks(list(itrack2,ht2), from = 11584986, to = 11585034, cex = 0.8,  add53 = TRUE, main = "E2F6", fontface.main = 1, cex.main = 2)
+#GLI3
+chr7 <- as.character("chr7")
+strack7 <- SequenceTrack(Hsapiens, chromosome = chr7)
+itrack7 <- IdeogramTrack(genome = "hg19", chromosome = chr7)
+ht7 <- HighlightTrack(trackList = list(strack7),
+                     start = c(42003273 , 42003273),  width = 0,
+                     chromosome = 7)
+plotTracks(list(itrack7,ht7), from = 42003249, to = 42003297, cex = 0.8,  add53 = TRUE, main = "GLI3", fontface.main = 1, cex.main = 2)
+#RUNX2
+chr6 <- as.character("chr6")
+strack6 <- SequenceTrack(Hsapiens, chromosome = chr6)
+itrack6 <- IdeogramTrack(genome = "hg19", chromosome = chr6)
+ht6 <- HighlightTrack(trackList = list(strack6),
+                     start = c(45516175 , 45516175),  width = 0,
+                     chromosome = 6)
+plotTracks(list(itrack6,ht6), from = 45516151, to = 45516199, cex = 0.8,  add53 = TRUE, main = "RUNX2", fontface.main = 1, cex.main = 2)
+#SOST
+chr17 <- as.character("chr17")
+strack17 <- SequenceTrack(Hsapiens, chromosome = chr17)
+itrack17 <- IdeogramTrack(genome = "hg19", chromosome = chr17)
+ht17 <- HighlightTrack(trackList = list(strack17),
+                     start = c(41831706, 41831706),  width = 0,
+                     chromosome = 17)
+plotTracks(list(itrack17,ht17), from = 41831683, to = 41831729, cex = 0.8,  add53 = TRUE, main = "SOST", fontface.main = 1, cex.main = 2)
+
+#Same plot: https://bioconductor.org/packages/release/bioc/vignettes/Gviz/inst/doc/Gviz.html#7_Composite_plots_for_multiple_chromosomes
+strackL <- SequenceTrack(Hsapiens, chromosome = c("chr2", "chr6", "chr7", "chr17"))
+itrackL <- IdeogramTrack(genome = "hg19", chromosome = c("chr2", "chr6", "chr7", "chr17"))
+htL <- HighlightTrack(trackList = list(strackL),
+                     start = list((41831706, 41831706), (45516175, 45516175), (42003273, 42003273), (11585010 , 11585010)),  width = 0, chromosome = c("chr2", "chr6", "chr7", "chr17"))
+plotTracks(list(itrack17,ht17), from = 41831683, to = 41831729, cex = 0.8,  add53 = TRUE, main = "SOST", fontface.main = 1, cex.main = 2)
+
+
+
+```
+
+
+#Statistics - Luciferase assay
+```{r}
+luc1 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "GLI, RUNX2, E2F6")
+new <-luc1[,c(1, 9)]
+new1 <- new[complete.cases(new),]
+new1 <- new1[-c(1:9),]
+luc2 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "SOST")
+new2 <-luc2[,c(1, 9)]
+new2 <- new2[complete.cases(new2),]
+new2 <- new2[-c(1:9),]
+
+final <- rbind(new1,new2)
+final <- final[order(final$Nombre),]
+
+#Checking normality of the data. Shapiro-Wilk test:
+shapiro.test(x = final$Normalizado) #p-value < .01. Data not normally distributed.
+#qq plot
+ggqqplot(final$Normalizado)
+#Non-parametric Kruskal-Wallis rank sum test
+kruskal.test(Normalizado ~ Nombre, data = final)
+#mult comp
+pairwise.wilcox.test(final$Normalizado, final$Nombre, p.adjust.method = "BH", confint = TRUE)
+
+#Non parametric: Wilcoxon rank sum test
+wilcox.test(final[which(final$Nombre == "E2F6-WT"),]$Normalizado, final[which(final$Nombre == "E2F6-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "GLI3-WT"),]$Normalizado, final[which(final$Nombre == "GLI3-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "RUNX2-WT"),]$Normalizado, final[which(final$Nombre == "RUNX2-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "SOST-WT"),]$Normalizado, final[which(final$Nombre == "SOST-Mut"),]$Normalizado)
+```
+
+
+#Dot plot - Luciferase assay - Figure
+```{R}
+myColors <- c("grey","grey", "grey", "grey", "#0072B2","#CC79A7", "#0072B2","#CC79A7")
+fillScale <- scale_fill_manual(name = unique(final$Nombre),values = myColors)
+order1 <-c('E2F6-WT','E2F6-Mut','GLI3-WT', 'GLI3-Mut','RUNX2-WT','RUNX2-Mut', 'SOST-WT', 'SOST-Mut')
+
+ggplot(final, aes(x=factor(Nombre, level=order1), y=Normalizado))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Nombre)), show.legend = FALSE, binpositions = 'all')+ylab("Ratio Luciferase/Renilla signals")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
+```
