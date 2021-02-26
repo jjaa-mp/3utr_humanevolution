@@ -1,0 +1,126 @@
+```{R Packages}
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(ggpubr)
+library(gridExtra)
+library(ggsignif)
+library(gprofiler2)
+library(BSgenome.Hsapiens.UCSC.hg19)
+```
+
+#gprofiler2 - Enrichment
+```{r}
+#Reading tables
+##Archaic
+ensemblhg19_3UTR_w_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC.csv")
+names(ensemblhg19_3UTR_w_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+##Archaic without Homo sapiens
+ensemblhg19_3UTR_w_ArchaicSNC_withoutHS <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC_withoutHS.csv")
+names(ensemblhg19_3UTR_w_ArchaicSNC_withoutHS) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+##Homo sapiens
+ensemblhg19_3UTR_w_HsapiensSNC <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC.csv")
+names(ensemblhg19_3UTR_w_HsapiensSNC) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+
+##Homo sapiens without archaics
+ensemblhg19_3UTR_w_HsapiensSNC_without_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC_without_arc.csv")
+names(ensemblhg19_3UTR_w_HsapiensSNC_without_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+
+
+###Exclusive gene names
+hs_exclusive <- subset(ensemblhg19_3UTR_w_HsapiensSNC_without_arc, !(gene_name %in% ensemblhg19_3UTR_w_arc$gene_name))$gene_name
+                       
+arc_exclusive <- subset(ensemblhg19_3UTR_w_ArchaicSNC_withoutHS, !(gene_name %in% ensemblhg19_3UTR_w_HsapiensSNC$gene_name))$gene_name
+
+#First enrich analysis - Genes from UTR with species-specific changes
+##Archaic
+arc_enrich005 <- gost(ensemblhg19_3UTR_w_arc$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+table01 <- apply(arc_enrich005[["result"]],2,as.character)
+table01 <- as.data.frame(table01)
+write.csv(table01[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_ensemblhg19_3UTR_w_ArchaicSNC_genes.csv", row.names = FALSE)
+##Homo sapiens
+hs_enrich005 <- gost(ensemblhg19_3UTR_w_HsapiensSNC$gene_name, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE) #length(unique(ensemblhg19_3UTR_w_hHF$gene_name)) == 890
+table1 <- apply(hs_enrich005[["result"]],2,as.character)
+table1 <- as.data.frame(table1)
+write.csv(table1[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_ensemblhg19_3UTR_w_HsapiensSNC_genes.csv", row.names = FALSE)
+
+exclusive_terms_hs <- subset(table1, !(term_name %in% table01$term_name))
+write.csv(exclusive_terms_hs[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_only_in_Hsapiens.csv", row.names = FALSE)
+exclusive_terms_archaic <- subset(table01, !(term_name %in% table1$term_name))
+write.csv(exclusive_terms_archaic[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_only_in_Archaics.csv", row.names = FALSE)
+
+common_terms <- subset(table1, term_name %in% table01$term_name)
+write.csv(common_terms[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_common_btwSpecies.csv", row.names = FALSE)
+
+#Second enrich analysis: Gene names exclusive for each lineage
+##Archaic
+arconly_enrich005 <- gost(arc_exclusive, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE)
+table02 <- apply(arconly_enrich005[["result"]],2,as.character)
+table02 <- as.data.frame(table02)
+write.csv(table02[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_Archaic_exclusivegenes.csv", row.names = FALSE)
+##Homo sapiens
+hsonly_enrich005 <- gost(hs_exclusive, organism = "hsapiens", correction_method = "gSCS", user_threshold = 0.05, evcodes = TRUE) #length(unique(ensemblhg19_3UTR_w_hHF_without_arc$gene_name)) == 573
+table2 <- apply(hsonly_enrich005[["result"]],2,as.character)
+table2 <- as.data.frame(table2)
+write.csv(table2[,-(1:2)], file="~/3utr_humanevolution/1.data/1.2.Enrich_results/GOterms_Hsapiens_exclusivegenes.csv", row.names = FALSE)
+
+#Plot - Exclusive terms in Homo sapiens
+exclusive_terms_hs$p_value <- as.character(exclusive_terms_hs$p_value)
+exclusive_terms_hs$p_value <- as.numeric(exclusive_terms_hs$p_value)
+
+exclusive_terms_hs$intersection_size <- as.character(exclusive_terms_hs$intersection_size)
+exclusive_terms_hs$intersection_size <- as.numeric(exclusive_terms_hs$intersection_size)
+
+
+exclusive_terms_hs$term_name <- str_replace(exclusive_terms_hs$term_name, "\\;.*","")
+
+exclusive_terms_hs$term_name <- factor(exclusive_terms_hs$term_name, levels=as.vector(exclusive_terms_hs$term_name))
+
+figGO<- ggplot(exclusive_terms_hs, aes(`term_name`,`source`))+geom_point(aes(size = `intersection_size`, colour=`p_value` ))+labs(size="Number of genes",col="Adj p-value")+scale_color_gradient()+xlab("")+ ylab("")+theme(axis.text.x = element_text(angle = 45, size=9, hjust=1), axis.text.y = element_text(face="bold", size=12), axis.ticks = element_line(),axis.line = element_line(size = 1, linetype = "solid"))
+
+ggsave(file="~/3utr_humanevolution/2.plots/G0enrich.pdf", figGO, width = 11.69, height = 8.27, units = "in")
+```
+
+
+#Statistics - Luciferase assay
+```{r}
+luc1 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "GLI, RUNX2, E2F6")
+new <-luc1[,c(1, 9)]
+new1 <- new[complete.cases(new),]
+new1 <- new1[-c(1:9),]
+luc2 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "SOST")
+new2 <-luc2[,c(1, 9)]
+new2 <- new2[complete.cases(new2),]
+new2 <- new2[-c(1:9),]
+
+final <- rbind(new1,new2)
+final <- final[order(final$Nombre),]
+
+#Checking normality of the data. Shapiro-Wilk test:
+shapiro.test(x = final$Normalizado) #p-value < .01. Data not normally distributed.
+#qq plot
+ggqqplot(final$Normalizado)
+#Non-parametric Kruskal-Wallis rank sum test
+kruskal.test(Normalizado ~ Nombre, data = final)
+#mult comp
+pairwise.wilcox.test(final$Normalizado, final$Nombre, p.adjust.method = "BH", confint = TRUE)
+
+#Non parametric: Wilcoxon rank sum test
+wilcox.test(final[which(final$Nombre == "E2F6-WT"),]$Normalizado, final[which(final$Nombre == "E2F6-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "GLI3-WT"),]$Normalizado, final[which(final$Nombre == "GLI3-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "RUNX2-WT"),]$Normalizado, final[which(final$Nombre == "RUNX2-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Nombre == "SOST-WT"),]$Normalizado, final[which(final$Nombre == "SOST-Mut"),]$Normalizado)
+```
+
+
+#Dot plot - Luciferase assay - Figure
+```{R}
+myColors <- c("grey","grey", "grey", "grey", "#0072B2","#CC79A7", "#0072B2","#CC79A7")
+fillScale <- scale_fill_manual(name = unique(final$Nombre),values = myColors)
+order1 <-c('E2F6-WT','E2F6-Mut','GLI3-WT', 'GLI3-Mut','RUNX2-WT','RUNX2-Mut', 'SOST-WT', 'SOST-Mut')
+
+ggplot(final, aes(x=factor(Nombre, level=order1), y=Normalizado))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Nombre)), show.legend = FALSE, binpositions = 'all')+ylab("Ratio Luciferase/Renilla signals")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
+```
