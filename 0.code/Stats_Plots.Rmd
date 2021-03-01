@@ -13,21 +13,21 @@ library(BSgenome.Hsapiens.UCSC.hg19)
 ```{r}
 #Reading tables
 ##Archaic
-ensemblhg19_3UTR_w_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC.csv")
+ensemblhg19_3UTR_w_arc <- read.delim("~/3utr_humanevolution/1.data/1.1.Input_tables/ensemblhg19_3UTR_w_ArchaicSNC.csv")
 names(ensemblhg19_3UTR_w_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
 
 ##Archaic without Homo sapiens
-ensemblhg19_3UTR_w_ArchaicSNC_withoutHS <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_ArchaicSNC_withoutHS.csv")
+ensemblhg19_3UTR_w_ArchaicSNC_withoutHS <- read.delim("~/3utr_humanevolution/1.data/1.1.Input_tables/ensemblhg19_3UTR_w_ArchaicSNC_withoutHS.csv")
 names(ensemblhg19_3UTR_w_ArchaicSNC_withoutHS) <- c("chr", "3utr_start", "3utr_end", "gene_name")
 
 ##Homo sapiens
-ensemblhg19_3UTR_w_HsapiensSNC <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC.csv")
+ensemblhg19_3UTR_w_HsapiensSNC <- read.delim("~/3utr_humanevolution/1.data/1.1.Input_tables/ensemblhg19_3UTR_w_HsapiensSNC.csv")
 names(ensemblhg19_3UTR_w_HsapiensSNC) <- c("chr", "3utr_start", "3utr_end", "gene_name")
 
 
 ##Homo sapiens without archaics
-ensemblhg19_3UTR_w_HsapiensSNC_without_arc <- read.delim("~/utr_genetics/1.data/ensemblhg19_3UTR_w_HsapiensSNC_without_arc.csv")
-names(ensemblhg19_3UTR_w_HsapiensSNC_without_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name")
+ensemblhg19_3UTR_w_HsapiensSNC_without_arc <- read.delim("~/3utr_humanevolution/1.data/1.1.Input_tables/ensemblhg19_3UTR_w_HsapiensSNC_without_arc.csv")
+names(ensemblhg19_3UTR_w_HsapiensSNC_without_arc) <- c("chr", "3utr_start", "3utr_end", "gene_name") 
 
 
 ###Exclusive gene names
