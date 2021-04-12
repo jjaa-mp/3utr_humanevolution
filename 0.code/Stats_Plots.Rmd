@@ -125,3 +125,26 @@ order1 <-c('E2F6-WT','E2F6-Mut','GLI3-WT', 'GLI3-Mut','RUNX2-WT','RUNX2-Mut', 'S
 
 ggplot(final, aes(x=factor(Nombre, level=order1), y=Normalizado))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Nombre)), show.legend = FALSE, binpositions = 'all')+ylab("Ratio Luciferase/Renilla signals")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
 ```
+
+#SOST SNP Genotyping
+```{R}
+df <- read.csv("~/3utr_humanevolution/1.data/1.3.SOST_BARCOS/SOST_rs17886183_BARCOS.csv")
+df <- df[(df1$SNP != "NA"),]
+df <- df[(df1$BMD_COL != "NA"),]
+
+nrow(df)
+
+df$BMD_COL <- as.numeric(df$BMD_COL)
+
+df %>%
+  group_by(SNP) %>%
+  summarise(mean = mean(BMD_COL, na.rm=TRUE))
+
+
+#Boxplot
+df$SNP <- factor(df$SNP, levels = c("GG", "GA"))
+pl1 <- ggplot(df, aes(x=SNP, y=BMD_COL, fill=SNP)) + 
+  geom_boxplot()+theme_minimal()+ylab("BMD")+xlab("SOST rs17886183")+labs(fill = "Genotype")
+
+ggsave(file="~/3utr_humanevolution/2.plots/SOST_rs17886183.pdf", pl1, width = 11.69, height = 8.27, units = "in")
+```
