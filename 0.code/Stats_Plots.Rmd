@@ -1,8 +1,8 @@
 ```{R Packages}
 library(ggplot2)
+library(ggpubr)
 library(readxl)
 library(dplyr)
-library(ggpubr)
 library(gridExtra)
 library(ggsignif)
 library(gprofiler2)
@@ -88,42 +88,42 @@ ggsave(file="~/3utr_humanevolution/2.plots/G0enrich.pdf", figGO, width = 11.69, 
 
 #Statistics - Luciferase assay
 ```{r}
-luc1 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "GLI, RUNX2, E2F6")
+luc1 <- read_excel("~/3utr_humanevolution/1.data/1.1.Input_tables/Luciferase_raw.xlsx", sheet = "GLI, RUNX2, E2F6")
 new <-luc1[,c(1, 9)]
 new1 <- new[complete.cases(new),]
 new1 <- new1[-c(1:9),]
-luc2 <- read_excel("~/Desktop/RESULTADOSFINALES.xlsx", sheet = "SOST")
+luc2 <- read_excel("~/3utr_humanevolution/1.data/1.1.Input_tables/Luciferase_raw.xlsx", sheet = "SOST")
 new2 <-luc2[,c(1, 9)]
 new2 <- new2[complete.cases(new2),]
 new2 <- new2[-c(1:9),]
 
 final <- rbind(new1,new2)
-final <- final[order(final$Nombre),]
+final <- final[order(final$Name),]
 
 #Checking normality of the data. Shapiro-Wilk test:
-shapiro.test(x = final$Normalizado) #p-value < .01. Data not normally distributed.
+shapiro.test(x = final$Normalized) #p-value < .01. Data not normally distributed.
 #qq plot
-ggqqplot(final$Normalizado)
+ggqqplot(final$Normalized)
 #Non-parametric Kruskal-Wallis rank sum test
-kruskal.test(Normalizado ~ Nombre, data = final)
+kruskal.test(Normalized ~ Name, data = final)
 #mult comp
-pairwise.wilcox.test(final$Normalizado, final$Nombre, p.adjust.method = "BH", confint = TRUE)
+pairwise.wilcox.test(final$Normalized, final$Name, p.adjust.method = "BH", confint = TRUE)
 
 #Non parametric: Wilcoxon rank sum test
-wilcox.test(final[which(final$Nombre == "E2F6-WT"),]$Normalizado, final[which(final$Nombre == "E2F6-Mut"),]$Normalizado)
-wilcox.test(final[which(final$Nombre == "GLI3-WT"),]$Normalizado, final[which(final$Nombre == "GLI3-Mut"),]$Normalizado)
-wilcox.test(final[which(final$Nombre == "RUNX2-WT"),]$Normalizado, final[which(final$Nombre == "RUNX2-Mut"),]$Normalizado)
-wilcox.test(final[which(final$Nombre == "SOST-WT"),]$Normalizado, final[which(final$Nombre == "SOST-Mut"),]$Normalizado)
+wilcox.test(final[which(final$Name == "E2F6-WT"),]$Normalized, final[which(final$Name == "E2F6-Mut"),]$Normalized)
+wilcox.test(final[which(final$Name == "GLI3-WT"),]$Normalized, final[which(final$Name == "GLI3-Mut"),]$Normalized)
+wilcox.test(final[which(final$Name == "RUNX2-WT"),]$Normalized, final[which(final$Name == "RUNX2-Mut"),]$Normalized)
+wilcox.test(final[which(final$Name == "SOST-WT"),]$Normalized, final[which(final$Name == "SOST-Mut"),]$Normalized)
 ```
 
 
 #Dot plot - Luciferase assay - Figure
 ```{R}
 myColors <- c("grey","grey", "grey", "grey", "#0072B2","#CC79A7", "#0072B2","#CC79A7")
-fillScale <- scale_fill_manual(name = unique(final$Nombre),values = myColors)
+fillScale <- scale_fill_manual(name = unique(final$Name),values = myColors)
 order1 <-c('E2F6-WT','E2F6-Mut','GLI3-WT', 'GLI3-Mut','RUNX2-WT','RUNX2-Mut', 'SOST-WT', 'SOST-Mut')
 
-ggplot(final, aes(x=factor(Nombre, level=order1), y=Normalizado))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Nombre)), show.legend = FALSE, binpositions = 'all')+ylab("Ratio Luciferase/Renilla signals")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
+ggplot(final, aes(x=factor(Name, level=order1), y=Normalized))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Name)), show.legend = FALSE, binpositions = 'all')+ylab("Normalized RLU")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
 ```
 
 #SOST SNP Genotyping
