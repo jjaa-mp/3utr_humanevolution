@@ -123,7 +123,9 @@ myColors <- c("grey","grey", "grey", "grey", "#0072B2","#CC79A7", "#0072B2","#CC
 fillScale <- scale_fill_manual(name = unique(final$Name),values = myColors)
 order1 <-c('E2F6-WT','E2F6-Mut','GLI3-WT', 'GLI3-Mut','RUNX2-WT','RUNX2-Mut', 'SOST-WT', 'SOST-Mut')
 
-ggplot(final, aes(x=factor(Name, level=order1), y=Normalized))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Name)), show.legend = FALSE, binpositions = 'all')+ylab("Normalized RLU")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
+lc <- ggplot(final, aes(x=factor(Name, level=order1), y=Normalized))+geom_violin(trim = FALSE)+geom_dotplot(binaxis='y', stackdir='center', aes(fill = factor(Name)), show.legend = FALSE, binpositions = 'all')+ylab("Normalized RLU")+xlab("")+fillScale+theme_classic()+geom_signif(comparisons = list(c("RUNX2-WT", "RUNX2-Mut"), c("SOST-WT", "SOST-Mut")), annotations = c("*", "**"))
+ggsave(file="~/3utr_humanevolution/2.plots/Luc_assay.pdf", lc, width = 11.69, height = 8.27, units = "in")
+
 ```
 
 #SOST SNP Genotyping
